@@ -8,8 +8,8 @@ testinfra_hosts = testinfra.utils.ansible_runner.AnsibleRunner(
 
 @pytest.mark.parametrize("dirs", [
     "/etc/prometheus",
-    "/etc/prometheus/console_libraries",
-    "/etc/prometheus/consoles",
+    "/opt/prometheus/current/console_libraries",
+    "/opt/prometheus/current/consoles",
     "/etc/prometheus/rules",
     "/etc/prometheus/file_sd",
     "/var/lib/prometheus"
@@ -22,8 +22,8 @@ def test_directories(host, dirs):
 
 @pytest.mark.parametrize("files", [
     "/etc/prometheus/prometheus.yml",
-    "/etc/prometheus/console_libraries/prom.lib",
-    "/etc/prometheus/consoles/prometheus.html",
+    "/opt/prometheus/current/console_libraries/prom.lib",
+    "/opt/prometheus/current/prometheus.html",
     "/etc/systemd/system/prometheus.service",
     "/usr/local/bin/prometheus",
     "/usr/local/bin/promtool"
@@ -36,8 +36,8 @@ def test_files(host, files):
 
 @pytest.mark.parametrize("files", [
     "/etc/prometheus/rules/ansible_managed.rules",
-    "/opt/prometheus/prometheus",
-    "/opt/prometheus/promtool",
+    "/opt/prometheus/current/prometheus",
+    "/opt/prometheus/current/promtool",
     "/opt/prometheus"
 ])
 def test_absent(host, files):
@@ -58,5 +58,5 @@ def test_socket(host):
 
 def test_version(host):
     version = os.getenv('PROMETHEUS', "2.3.1")
-    out = host.run("/usr/local/bin/prometheus --version").stderr
+    out = host.run("/opt/prometheus/current/prometheus --version").stderr
     assert "prometheus, version " + version in out

@@ -35,33 +35,16 @@
   #  when: not item | basename | splitext | difference(['.yml']) | join('') in prometheus_targets.keys()
   with_dict: "{{ prometheus_targets }}"
 
-- block:
-    - name: Get latest release
-      uri:
-        url: "https://api.github.com/repos/prometheus/prometheus/releases/latest"
-        method: GET
-        return_content: true
-        status_code: 200
-        body_format: json
-        validate_certs: false
-        user: "{{ lookup('env', 'GH_USER') | default(omit) }}"
-        password: "{{ lookup('env', 'GH_TOKEN') | default(omit) }}"
-      no_log: true
-      register: _latest_release
-      until: _latest_release.status == 200
-      retries: 5
-
-    - name: "Set prometheus version to {{ _latest_release.json.tag_name[1:] }}"
-      set_fact:
-        prometheus_version: "{{ _latest_release.json.tag_name[1:] }}"
-  when: prometheus_version == "latest"
-
+- name: set url for checksum file
+  set_fact:
+    checksum_url: "{{ prometheus_download_url | regex_replace('\\/[^\\/]+$', '/sha256sums.txt') }}"
+    
 - name: "Get checksum for {{ go_arch_map[ansible_architecture] | default(ansible_architecture) }} architecture"
   set_fact:
     prometheus_checksum: "{{ item.split(' ')[0] }}"
   with_items:
-    - "{{ lookup('url', 'https://github.com/prometheus/prometheus/releases/download/v' + prometheus_version + '/sha256sums.txt', wantlist=True) | list }}"
-  when: "('linux-' + (go_arch_map[ansible_architecture] | default(ansible_architecture)) + '.tar.gz') in item"
+    - "{{ lookup('url', checksum_url, wantlist=True) | list }}"
+  when: "prometheus_archive_name in item"
 
 - name: Get systemd version
   shell: systemctl --version | awk '$1 == "systemd" {print $2}'
